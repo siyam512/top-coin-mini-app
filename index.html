@@ -24,6 +24,7 @@
       color: white;
       padding: 22px 20px;
       text-align: center;
+      border-radius: 0 0 25px 25px;
     }
 
     .header h1 {
@@ -33,7 +34,7 @@
 
     .header p {
       margin: 7px 0 0;
-      opacity: .8;
+      opacity: 0.8;
     }
 
     .container {
@@ -45,13 +46,24 @@
       padding: 20px;
       border-radius: 18px;
       margin-bottom: 18px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.07);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.07);
     }
 
     .title {
       font-size: 18px;
       font-weight: bold;
       margin-bottom: 15px;
+    }
+
+    .rate {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .rate span {
+      color: #16a34a;
     }
 
     label {
@@ -69,43 +81,50 @@
       outline: none;
     }
 
-    .result {
-      margin-top: 18px;
+    input:focus {
+      border-color: #2563eb;
+    }
+
+    .calculation {
+      margin-top: 15px;
       padding: 18px;
       background: #f0fdf4;
       border-radius: 14px;
       text-align: center;
+      border: 1px solid #bbf7d0;
     }
 
-    .coins {
-      font-size: 18px;
-      color: #166534;
+    .calculation .small {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 6px;
     }
 
     .money {
-      margin-top: 8px;
-      font-size: 32px;
+      font-size: 30px;
       font-weight: bold;
-      color: #15803d;
-    }
-
-    .rate {
-      margin-top: 8px;
-      color: #666;
-      font-size: 14px;
+      color: #16a34a;
     }
 
     button {
       width: 100%;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 16px;
       font-size: 17px;
       font-weight: bold;
       cursor: pointer;
       margin-top: 15px;
+    }
+
+    .submit-button {
       background: #2563eb;
       color: white;
+    }
+
+    .clear-button {
+      background: #e5e7eb;
+      color: #111827;
     }
 
     .info {
@@ -113,93 +132,182 @@
       line-height: 1.6;
       color: #555;
     }
+
+    .success {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
   </style>
 </head>
 
 <body>
 
   <div class="header">
-    <h1>🪙 Top Coin Market</h1>
-    <p>Coin-এর মূল্য অটো হিসাব করুন</p>
+    <h1>Top Coin Market</h1>
+    <p>Coin Sell / Market</p>
   </div>
 
   <div class="container">
 
     <div class="card">
+      <div class="title">বর্তমান কয়েন রেট</div>
+
+      <div class="rate">
+        ১,০০০ কয়েন = <span>৳৪</span>
+      </div>
+
+      <div class="info">
+        নিচে আপনার কয়েনের পরিমাণ লিখুন। টাকা অটোমেটিক হিসাব হয়ে দেখাবে।
+      </div>
+    </div>
+
+
+    <div class="card">
 
       <div class="title">কয়েনের পরিমাণ দিন</div>
 
-      <label for="coinInput">Coins</label>
+      <label for="coins">কয়েন</label>
 
       <input
-        id="coinInput"
         type="number"
-        min="0"
+        id="coins"
         placeholder="যেমন: 1000"
+        min="0"
         oninput="calculateMoney()"
       >
 
-      <div class="result">
+      <div class="calculation">
 
-        <div class="coins">
-          🪙 <span id="showCoins">0</span> Coins
+        <div class="small">
+          আপনার কয়েনের মূল্য
         </div>
 
-        <div class="money">
-          ৳ <span id="showMoney">0.00</span>
-        </div>
-
-        <div class="rate">
-          1,000 Coins = ৳4
+        <div class="money" id="money">
+          ৳0
         </div>
 
       </div>
 
-      <button onclick="calculateMoney()">
-        💰 হিসাব করুন
+      <button class="submit-button" onclick="submitCoins()">
+        কয়েন বিক্রি করুন
       </button>
+
+      <button class="clear-button" onclick="clearCoins()">
+        পরিষ্কার করুন
+      </button>
+
+      <div class="success" id="success">
+        আপনার কয়েনের তথ্য নেওয়া হয়েছে।
+      </div>
 
     </div>
 
+
     <div class="card">
 
-      <div class="title">📌 Coin Rate</div>
+      <div class="title">হিসাব</div>
 
       <div class="info">
-        1,000 Coins = ৳4<br>
-        2,000 Coins = ৳8<br>
-        5,000 Coins = ৳20<br>
-        10,000 Coins = ৳40
+
+        ১,০০০ কয়েন = ৳৪<br>
+        ২,০০০ কয়েন = ৳৮<br>
+        ৩,০০০ কয়েন = ৳১২<br>
+        ৫,০০০ কয়েন = ৳২০<br>
+        ১০,০০০ কয়েন = ৳৪০
+
       </div>
 
     </div>
 
   </div>
 
+
   <script>
+
+    // 1000 coins = 4 taka
+    const COINS_PER_1000 = 1000;
+    const TAKA_PER_1000 = 4;
+
 
     function calculateMoney() {
 
-      let coins = Number(document.getElementById("coinInput").value);
+      const coinInput = document.getElementById("coins");
+      const moneyDisplay = document.getElementById("money");
 
-      if (isNaN(coins) || coins < 0) {
-        coins = 0;
+      const coins = Number(coinInput.value);
+
+      if (!coins || coins < 0) {
+        moneyDisplay.innerText = "৳0";
+        return;
       }
 
-      // 1000 Coins = 4 Taka
-      let money = (coins / 1000) * 4;
+      const money = (coins / COINS_PER_1000) * TAKA_PER_1000;
 
-      document.getElementById("showCoins").innerText =
-        coins.toLocaleString();
-
-      document.getElementById("showMoney").innerText =
-        money.toFixed(2);
+      moneyDisplay.innerText = "৳" + formatMoney(money);
     }
 
-    // Telegram Mini App
+
+    function formatMoney(amount) {
+
+      if (Number.isInteger(amount)) {
+        return amount.toLocaleString("en-US");
+      }
+
+      return amount.toFixed(2);
+    }
+
+
+    function clearCoins() {
+
+      document.getElementById("coins").value = "";
+      document.getElementById("money").innerText = "৳0";
+      document.getElementById("success").style.display = "none";
+    }
+
+
+    function submitCoins() {
+
+      const coins = Number(
+        document.getElementById("coins").value
+      );
+
+      if (!coins || coins <= 0) {
+
+        alert("দয়া করে কয়েনের পরিমাণ লিখুন।");
+        return;
+      }
+
+      const money = (coins / 1000) * 4;
+
+      document.getElementById("success").innerText =
+        "আপনার " +
+        coins.toLocaleString("en-US") +
+        " কয়েনের মূল্য ৳" +
+        formatMoney(money) +
+        "।";
+
+      document.getElementById("success").style.display = "block";
+
+
+      // Telegram Mini App
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.HapticFeedback.impactOccurred("light");
+      }
+    }
+
+
+    // Telegram Mini App initialize
     if (window.Telegram && Telegram.WebApp) {
+
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
+
     }
 
   </script>
