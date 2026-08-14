@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Coin Market</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #111827;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 25px 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 25px;
+        }
+
+        .header p {
+            margin: 7px 0 0;
+            opacity: .8;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,.07);
+        }
+
+        .market-title {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .rate {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .coin {
+            color: #16a34a;
+            font-size: 18px;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sell-button {
+            background: #2563eb;
+            color: white;
+        }
+
+        .back-button {
+            background: #e5e7eb;
+            color: #111827;
+            margin-top: 10px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        .total {
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 18px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .notice {
+            background: #fff7ed;
+            padding: 14px;
+            border-radius: 12px;
+            margin-top: 15px;
+            color: #9a3412;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>🪙 Top Coin Market</h1>
+    <p>Coin Selling Portal</p>
+</div>
+
+<div class="container">
+
+    <div id="home">
+
+        <div class="card">
+            <div class="market-title">📈 LIVE MARKET</div>
+
+            <div class="rate">
+                ৳4 <span class="coin">/ Coin</span>
+            </div>
+        </div>
+
+        <button class="sell-button" onclick="showSell()">
+            💰 SELL NOW
+        </button>
+
+        <div class="card" style="margin-top:18px;">
+            <h3>🪙 Top Coin</h3>
+
+            <p>
+                আপনার Coin বিক্রি করতে Sell Now চাপুন।
+                সর্বনিম্ন 1,000 Coin বিক্রি করা যাবে।
+            </p>
+        </div>
+
+    </div>
+
+
+    <div id="sellPage" class="hidden">
+
+        <div class="card">
+
+            <h2>💰 Sell Coins</h2>
+
+            <label>Coin Amount</label>
+
+            <input
+                id="coins"
+                type="number"
+                min="1000"
+                placeholder="Minimum 1000"
+                oninput="calculate()"
+            >
+
+            <div class="total">
+                আপনি পাবেন:
+                ৳<span id="total">0</span>
+            </div>
+
+
+            <label>Coin Transaction ID / Code</label>
+
+            <input
+                id="coinTx"
+                type="text"
+                placeholder="Coin Transaction ID দিন"
+            >
+
+
+            <label>Coin Screenshot / Proof</label>
+
+            <input
+                id="proof"
+                type="file"
+                accept="image/*"
+            >
+
+
+            <label>আপনার bKash Number</label>
+
+            <input
+                id="bkash"
+                type="tel"
+                placeholder="01XXXXXXXXX"
+            >
+
+
+            <div class="notice">
+                ⚠️ আপনার Coin Transaction ID এবং Screenshot
+                Admin যাচাই করবেন। যাচাই সম্পন্ন হলে Admin
+                আপনার bKash নম্বরে টাকা পাঠাবেন।
+            </div>
+
+
+            <button
+                class="sell-button"
+                style="margin-top:18px;"
+                onclick="submitRequest()"
+            >
+                📤 SUBMIT SELL REQUEST
+            </button>
+
+
+            <button
+                class="back-button"
+                onclick="showHome()"
+            >
+                ← BACK
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const RATE = 4;
+
+function showSell() {
+
+    document.getElementById("home")
+        .classList.add("hidden");
+
+    document.getElementById("sellPage")
+        .classList.remove("hidden");
+}
+
+
+function showHome() {
+
+    document.getElementById("sellPage")
+        .classList.add("hidden");
+
+    document.getElementById("home")
+        .classList.remove("hidden");
+}
+
+
+function calculate() {
+
+    let coins =
+        Number(document.getElementById("coins").value);
+
+    if (coins < 0) {
+        coins = 0;
+    }
+
+    let total = coins * RATE;
+
+    document.getElementById("total").innerText =
+        total.toLocaleString("en-BD");
+}
+
+
+function submitRequest() {
+
+    let coins =
+        Number(document.getElementById("coins").value);
+
+    let coinTx =
+        document.getElementById("coinTx").value.trim();
+
+    let bkash =
+        document.getElementById("bkash").value.trim();
+
+    let proof =
+        document.getElementById("proof").files.length;
+
+
+    if (coins < 1000) {
+
+        alert("সর্বনিম্ন 1,000 Coin বিক্রি করতে হবে।");
+
+        return;
+    }
+
+
+    if (!coinTx) {
+
+        alert("Coin Transaction ID দিন।");
+
+        return;
+    }
+
+
+    if (!proof) {
+
+        alert("Coin Screenshot / Proof দিন।");
+
+        return;
+    }
+
+
+    if (!bkash) {
+
+        alert("আপনার bKash Number দিন।");
+
+        return;
+    }
+
+
+    alert(
+        "Sell Request প্রস্তুত হয়েছে।\\n\\n" +
+        "Coins: " +
+        coins.toLocaleString("en-BD") +
+        "\\nAmount: ৳" +
+        (coins * RATE).toLocaleString("en-BD") +
+        "\\n\\nপরের ধাপে Request Database-এ যাবে।"
+    );
+}
+
+
+if (window.Telegram && Telegram.WebApp) {
+
+    Telegram.WebApp.ready();
+
+    Telegram.WebApp.expand();
+}
+
+</script>
+
+</body>
+</html>
