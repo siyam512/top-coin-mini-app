@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -125,6 +125,11 @@
         .hidden {
             display: none;
         }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -175,6 +180,7 @@
                 id="coins"
                 type="number"
                 min="1000"
+                step="1000"
                 placeholder="Minimum 1000"
                 oninput="calculate()"
             >
@@ -184,7 +190,6 @@
                 ৳<span id="total">0</span>
             </div>
 
-
             <label>Coin Transaction ID / Code</label>
 
             <input
@@ -192,7 +197,6 @@
                 type="text"
                 placeholder="Coin Transaction ID দিন"
             >
-
 
             <label>Coin Screenshot / Proof</label>
 
@@ -202,7 +206,6 @@
                 accept="image/*"
             >
 
-
             <label>আপনার bKash Number</label>
 
             <input
@@ -211,22 +214,20 @@
                 placeholder="01XXXXXXXXX"
             >
 
-
             <div class="notice">
                 ⚠️ আপনার Coin Transaction ID এবং Screenshot
                 Admin যাচাই করবেন। যাচাই সম্পন্ন হলে Admin
                 আপনার bKash নম্বরে টাকা পাঠাবেন।
             </div>
 
-
             <button
+                id="submitButton"
                 class="sell-button"
                 style="margin-top:18px;"
                 onclick="submitRequest()"
             >
                 📤 SUBMIT SELL REQUEST
             </button>
-
 
             <button
                 class="back-button"
@@ -244,17 +245,35 @@
 
 <script>
 
-/*
-   Coin Rate:
-   1,000 Coin = 4 Taka
+/* =========================================
+   SUPABASE CONFIG
+   ========================================= */
 
-   তাই:
-   1 Coin = 0.004 Taka
-*/
+const SUPABASE_URL = "https://xhfrewguftmdzqrpssbj.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_mui6f_8mKmofp4fttfhr-w_QG2M_Ukg";
+
+
+/* =========================================
+   COIN RATE
+   ========================================= */
 
 const COINS_PER_1000 = 1000;
 const TAKA_PER_1000 = 4;
 
+
+/* =========================================
+   TELEGRAM
+   ========================================= */
+
+const tg =
+    window.Telegram && Telegram.WebApp
+        ? Telegram.WebApp
+        : null;
+
+
+/* =========================================
+   PAGE CONTROL
+   ========================================= */
 
 function showSell() {
 
@@ -276,16 +295,13 @@ function showHome() {
 }
 
 
-/*
+/* =========================================
    AUTO CALCULATION
-
-   কয়েনের ঘরে সংখ্যা লিখলেই
-   নিচে টাকার পরিমাণ অটো দেখাবে।
-*/
+   ========================================= */
 
 function calculate() {
 
-    let coins =
+    const coins =
         Number(document.getElementById("coins").value);
 
     if (!coins || coins < 0) {
@@ -295,20 +311,17 @@ function calculate() {
         return;
     }
 
-
-    // 1,000 Coin = 4 Taka
-    let total =
+    const total =
         (coins / COINS_PER_1000) * TAKA_PER_1000;
-
 
     document.getElementById("total").innerText =
         formatMoney(total);
 }
 
 
-/*
-   টাকা সুন্দরভাবে দেখানোর জন্য
-*/
+/* =========================================
+   MONEY FORMAT
+   ========================================= */
 
 function formatMoney(amount) {
 
@@ -325,24 +338,49 @@ function formatMoney(amount) {
 }
 
 
-function submitRequest() {
+/* =========================================
+   SUBMIT REQUEST
+   ========================================= */
 
-    let coins =
+async function submitRequest() {
+
+    const coins =
         Number(document.getElementById("coins").value);
 
-    let coinTx =
-        document.getElementById("coinTx").value.trim();
+    const coinTx =
+        document.getElementById("coinTx")
+            .value
+            .trim();
 
-    let bkash =
-        document.getElementById("bkash").value.trim();
+    const bkash =
+        document.getElementById("bkash")
+            .value
+            .trim();
 
-    let proof =
-        document.getElementById("proof").files.length;
+    const proofInput =
+        document.getElementById("proof");
+
+    const submitButton =
+        document.getElementById("submitButton");
 
 
-    if (coins < 1000) {
+    /* Validation */
 
-        alert("সর্বনিম্ন 1,000 Coin বিক্রি করতে হবে।");
+    if (!coins || coins < 1000) {
+
+        alert(
+            "সর্বনিম্ন 1,000 Coin বিক্রি করতে হবে।"
+        );
+
+        return;
+    }
+
+
+    if (coins % 1000 !== 0) {
+
+        alert(
+            "Coin অবশ্যই 1,000 এর গুণিতক হতে হবে।"
+        );
 
         return;
     }
@@ -350,15 +388,19 @@ function submitRequest() {
 
     if (!coinTx) {
 
-        alert("Coin Transaction ID দিন।");
+        alert(
+            "Coin Transaction ID দিন।"
+        );
 
         return;
     }
 
 
-    if (!proof) {
+    if (!proofInput.files.length) {
 
-        alert("Coin Screenshot / Proof দিন।");
+        alert(
+            "Coin Screenshot / Proof দিন।"
+        );
 
         return;
     }
@@ -366,37 +408,274 @@ function submitRequest() {
 
     if (!bkash) {
 
-        alert("আপনার bKash Number দিন।");
+        alert(
+            "আপনার bKash Number দিন।"
+        );
 
         return;
     }
 
 
-    /*
-       এখানেও একই অটো হিসাব ব্যবহার হবে
-       1,000 Coin = 4 Taka
-    */
+    /* Telegram User */
 
-    let total =
-        (coins / COINS_PER_1000) * TAKA_PER_1000;
+    let telegramUser = null;
+
+    if (tg && tg.initDataUnsafe) {
+
+        telegramUser =
+            tg.initDataUnsafe.user || null;
+    }
 
 
-    alert(
-        "Sell Request প্রস্তুত হয়েছে.\n\n" +
-        "Coins: " +
-        coins.toLocaleString("en-BD") +
-        "\nAmount: ৳" +
-        formatMoney(total) +
-        "\n\nপরের ধাপে Request Database-এ যাবে।"
+    if (!telegramUser || !telegramUser.id) {
+
+        alert(
+            "❌ Telegram User পাওয়া যাচ্ছে না।\n\nMini App অবশ্যই Telegram-এর ভিতর থেকে খুলতে হবে।"
+        );
+
+        return;
+    }
+
+
+    /* Amount */
+
+    const total =
+        (coins / COINS_PER_1000) *
+        TAKA_PER_1000;
+
+
+    /* Button loading */
+
+    submitButton.classList.add("loading");
+
+    submitButton.innerText =
+        "⏳ REQUEST পাঠানো হচ্ছে...";
+
+
+    try {
+
+        /*
+         * Member খোঁজা
+         */
+
+        const memberResponse =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/members?telegram_id=eq.${encodeURIComponent(
+                    String(telegramUser.id)
+                )}&select=id`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+
+
+        if (!memberResponse.ok) {
+
+            const errorText =
+                await memberResponse.text();
+
+            throw new Error(
+                "Member lookup failed: " +
+                errorText
+            );
+        }
+
+
+        const members =
+            await memberResponse.json();
+
+
+        if (
+            !Array.isArray(members) ||
+            members.length === 0
+        ) {
+
+            alert(
+                "❌ আপনার Member account পাওয়া যায়নি।\n\nআগে Admin-এর মাধ্যমে Member হিসেবে যুক্ত হতে হবে।"
+            );
+
+            return;
+        }
+
+
+        const memberId =
+            members[0].id;
+
+
+        /*
+         * Screenshot আপাতত Base64 করা হচ্ছে।
+         */
+
+        const file =
+            proofInput.files[0];
+
+        const proofBase64 =
+            await fileToBase64(file);
+
+
+        /*
+         * Database request
+         */
+
+        const requestResponse =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/coin_requests`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "apikey":
+                            SUPABASE_KEY,
+
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`,
+
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body: JSON.stringify({
+
+                        member_id:
+                            memberId,
+
+                        coin_amount:
+                            coins,
+
+                        coin_transaction_id:
+                            coinTx,
+
+                        proof_url:
+                            proofBase64,
+
+                        bkash_number:
+                            bkash,
+
+                        status:
+                            "pending"
+                    })
+                }
+            );
+
+
+        if (!requestResponse.ok) {
+
+            const errorText =
+                await requestResponse.text();
+
+            throw new Error(
+                "Request failed: " +
+                errorText
+            );
+        }
+
+
+        const result =
+            await requestResponse.json();
+
+
+        const requestId =
+            Array.isArray(result) &&
+            result[0]
+                ? result[0].id
+                : null;
+
+
+        alert(
+            "✅ Coin request সফলভাবে পাঠানো হয়েছে!\n\n" +
+            "🪙 Coin: " +
+            coins.toLocaleString("en-BD") +
+            "\n💰 Amount: ৳" +
+            formatMoney(total) +
+            "\n🆔 Request ID: " +
+            (requestId || "Pending") +
+            "\n\n⏳ এখন Admin approval-এর অপেক্ষায় থাকুন।"
+        );
+
+
+        /* Form reset */
+
+        document.getElementById("coins")
+            .value = "";
+
+        document.getElementById("coinTx")
+            .value = "";
+
+        document.getElementById("bkash")
+            .value = "";
+
+        document.getElementById("proof")
+            .value = "";
+
+        document.getElementById("total")
+            .innerText = "0";
+
+
+        showHome();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "❌ Request পাঠাতে সমস্যা হয়েছে।\n\n" +
+            String(error.message || error)
+        );
+
+    } finally {
+
+        submitButton.classList.remove(
+            "loading"
+        );
+
+        submitButton.innerText =
+            "📤 SUBMIT SELL REQUEST";
+    }
+}
+
+
+/* =========================================
+   FILE → BASE64
+   ========================================= */
+
+function fileToBase64(file) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+            reader.onload = () =>
+                resolve(reader.result);
+
+            reader.onerror = reject;
+
+            reader.readAsDataURL(file);
+        }
     );
 }
 
 
-if (window.Telegram && Telegram.WebApp) {
+/* =========================================
+   TELEGRAM WEB APP
+   ========================================= */
 
-    Telegram.WebApp.ready();
+if (tg) {
 
-    Telegram.WebApp.expand();
+    tg.ready();
+
+    tg.expand();
 }
 
 </script>
